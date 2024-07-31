@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -40,13 +41,14 @@ func TestGETPlayers(t *testing.T) {
 		assertResponseBody(t, response.Body.String(), "10")
 	})
 
-	t.Run("returns 404 on missing players", func(t *testing.T) {
+	t.Run("returns 0 on missing players", func(t *testing.T) {
 		request := newGetScoreRequest("Apollo")
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
 
-		assertStatus(t, response.Code, http.StatusNotFound)
+		assertStatus(t, response.Code, http.StatusOK)
+		assertResponseBody(t, response.Body.String(), "0")
 	})
 }
 
@@ -66,7 +68,7 @@ func TestStoreWins(t *testing.T) {
 
 		server.ServeHTTP(response, request)
 
-		assertStatus(t, response.Code, http.StatusAccepted)
+		assertStatus(t, response.Code, http.StatusOK)
 		AssertPlayerWin(t, &store, player)
 	})
 }
@@ -135,12 +137,13 @@ func newLeagueRequest() *http.Request {
 }
 
 func newGetScoreRequest(name string) *http.Request {
-	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/players/%s", name), nil)
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/info/%s", name), nil)
 	return req
 }
 
 func newPostWinRequest(name string) *http.Request {
-	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/players/%s", name), nil)
+	body := fmt.Sprintf(`{"name": "%s"}`, name)
+	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/players/"), strings.NewReader(body))
 	return req
 }
 
