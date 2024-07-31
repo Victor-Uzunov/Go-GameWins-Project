@@ -7,20 +7,18 @@ import (
 	"strings"
 )
 
-// PlayerStore stores score information about players.
 type PlayerStore interface {
 	GetPlayerScore(name string) int
 	RecordWin(name string)
 	GetLeague() League
+	AddPlayer(player *Player)
 }
 
-// Player stores a name with a number of wins.
 type Player struct {
-	Name string
-	Wins int
+	Name string `json:"name"`
+	Wins int    `json:"wins"`
 }
 
-// PlayerServer is a HTTP interface for player information.
 type PlayerServer struct {
 	store PlayerStore
 	http.Handler
@@ -37,11 +35,20 @@ func NewPlayerServer(store PlayerStore) *PlayerServer {
 	router := http.NewServeMux()
 	router.Handle("/league/", http.HandlerFunc(p.leagueHandler))
 	router.Handle("/players/", http.HandlerFunc(p.playersHandler))
+	router.Handle("/add/", http.HandlerFunc(p.addHandler))
 	router.Handle("/info/", http.HandlerFunc(p.infoHandler))
 
 	p.Handler = router
 
 	return p
+}
+
+func (p *PlayerServer) addHandler(w http.ResponseWriter, r *http.Request) {
+	var player Player
+	if err := json.NewDecoder(r.Body).Decode(&player); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+	}
+	p.store.AddPlayer(&player)
 }
 
 func (p *PlayerServer) leagueHandler(w http.ResponseWriter, r *http.Request) {
@@ -50,14 +57,12 @@ func (p *PlayerServer) leagueHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (p *PlayerServer) playersHandler(w http.ResponseWriter, r *http.Request) {
-	player := strings.TrimPrefix(r.URL.Path, "/players/")
-
-	switch r.Method {
-	case http.MethodPost:
-		p.processWin(w, player)
-	case http.MethodGet:
-		p.showScore(w, player)
+	var player Player
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&player); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
 	}
+	p.processWin(w, player.Name)
 }
 
 func (p *PlayerServer) infoHandler(w http.ResponseWriter, r *http.Request) {
@@ -78,5 +83,5 @@ func (p *PlayerServer) showScore(w http.ResponseWriter, player string) {
 
 func (p *PlayerServer) processWin(w http.ResponseWriter, player string) {
 	p.store.RecordWin(player)
-	w.WriteHeader(http.StatusAccepted)
+	w.WriteHeader(http.StatusOK)
 }
