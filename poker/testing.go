@@ -24,6 +24,10 @@ func (s *StubPlayerStore) RecordWin(name string) {
 	s.WinCalls = append(s.WinCalls, name)
 }
 
+func (s *StubPlayerStore) AddPlayer(player *Player) {
+	s.Scores[player.Name] = player.Wins
+}
+
 // GetLeague returns League.
 func (s *StubPlayerStore) GetLeague() League {
 	return s.League

@@ -100,7 +100,7 @@ func (f *FileSystemPlayerStore) RecordWin(name string) {
 	f.database.Encode(f.league)
 }
 
-func (f *FileSystemPlayerStore) AddPlayer(player Player) {
-	f.league = append(f.league, player)
+func (f *FileSystemPlayerStore) AddPlayer(player *Player) {
+	f.league = append(f.league, *player)
 	f.database.Encode(f.league)
 }

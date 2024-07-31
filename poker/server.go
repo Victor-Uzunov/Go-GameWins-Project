@@ -14,6 +14,10 @@ type PlayerStore interface {
 	AddPlayer(player *Player)
 }
 
+type Winner struct {
+	Name string `json:"name"`
+}
+
 type Player struct {
 	Name string `json:"name"`
 	Wins int    `json:"wins"`
@@ -34,7 +38,7 @@ func NewPlayerServer(store PlayerStore) *PlayerServer {
 
 	router := http.NewServeMux()
 	router.Handle("/league/", http.HandlerFunc(p.leagueHandler))
-	router.Handle("/players/", http.HandlerFunc(p.playersHandler))
+	router.Handle("/players/", http.HandlerFunc(p.winHandler))
 	router.Handle("/add/", http.HandlerFunc(p.addHandler))
 	router.Handle("/info/", http.HandlerFunc(p.infoHandler))
 
@@ -47,6 +51,7 @@ func (p *PlayerServer) addHandler(w http.ResponseWriter, r *http.Request) {
 	var player Player
 	if err := json.NewDecoder(r.Body).Decode(&player); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		fmt.Errorf("problem with json decoding: %v", err)
 	}
 	p.store.AddPlayer(&player)
 }
@@ -56,13 +61,14 @@ func (p *PlayerServer) leagueHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(p.store.GetLeague())
 }
 
-func (p *PlayerServer) playersHandler(w http.ResponseWriter, r *http.Request) {
-	var player Player
+func (p *PlayerServer) winHandler(w http.ResponseWriter, r *http.Request) {
+	var winner Winner
 	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&player); err != nil {
+	if err := decoder.Decode(&winner); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		fmt.Errorf("problem with json decoding: %v", err)
 	}
-	p.processWin(w, player.Name)
+	p.processWin(w, winner.Name)
 }
 
 func (p *PlayerServer) infoHandler(w http.ResponseWriter, r *http.Request) {
