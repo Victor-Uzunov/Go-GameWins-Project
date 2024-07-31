@@ -72,9 +72,8 @@ func (p *PlayerServer) winHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (p *PlayerServer) infoHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("content-type", jsonContentType)
 	playerName := strings.TrimPrefix(r.URL.Path, "/info/")
-	json.NewEncoder(w).Encode(p.store.GetLeague().Find(playerName))
+	fmt.Fprint(w, p.store.GetPlayerScore(playerName))
 }
 
 func (p *PlayerServer) showScore(w http.ResponseWriter, player string) {

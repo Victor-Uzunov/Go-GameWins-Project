@@ -13,6 +13,11 @@ type StubPlayerStore struct {
 	League   []Player
 }
 
+func (s *StubPlayerStore) Find(name string) bool {
+	_, ok := s.Scores[name]
+	return ok
+}
+
 // GetPlayerScore returns a score from Scores.
 func (s *StubPlayerStore) GetPlayerScore(name string) int {
 	score := s.Scores[name]
