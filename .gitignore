@@ -24,3 +24,11 @@ go.work.sum
 
 # env file
 .env
+
+# Ignore gqlgen generated files
+/graph/generated/
+
+# Track schema and config files
+!graph/schema/*.graphql
+!gqlgen.yml
+
