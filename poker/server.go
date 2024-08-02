@@ -30,7 +30,6 @@ type PlayerServer struct {
 
 const jsonContentType = "application/json"
 
-// NewPlayerServer creates a PlayerServer with routing configured.
 func NewPlayerServer(store PlayerStore) *PlayerServer {
 	p := new(PlayerServer)
 
