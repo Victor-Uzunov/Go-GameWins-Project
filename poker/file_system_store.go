@@ -2,6 +2,7 @@ package poker
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -88,7 +89,10 @@ func (f *FileSystemPlayerStore) GetPlayerScore(name string) int {
 	return 0
 }
 
-func (f *FileSystemPlayerStore) RecordWin(name string) {
+func (f *FileSystemPlayerStore) RecordWin(name string) error {
+	if name == "" {
+		return errors.New("no player name provided")
+	}
 	player := f.league.Find(name)
 
 	if player != nil {
@@ -97,10 +101,16 @@ func (f *FileSystemPlayerStore) RecordWin(name string) {
 		f.league = append(f.league, Player{name, 1})
 	}
 
-	f.database.Encode(f.league)
+	return f.database.Encode(f.league)
 }
 
-func (f *FileSystemPlayerStore) AddPlayer(player *Player) {
+func (f *FileSystemPlayerStore) AddPlayer(player *Player) error {
+	if player.Name == "" {
+		return errors.New("player name cannot be empty")
+	}
 	f.league = append(f.league, *player)
-	f.database.Encode(f.league)
+	if err := f.database.Encode(f.league); err != nil {
+		return errors.New("failed to add player to database" + err.Error())
+	}
+	return nil
 }

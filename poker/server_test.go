@@ -28,7 +28,7 @@ func TestGETPlayers(t *testing.T) {
 		server.ServeHTTP(response, request)
 
 		assertStatus(t, response.Code, http.StatusOK)
-		assertResponseBody(t, response.Body.String(), "20")
+		assertResponseBody(t, response.Body.String(), "The player Pepper has 20 wins")
 	})
 
 	t.Run("returns Floyd's score", func(t *testing.T) {
@@ -38,7 +38,7 @@ func TestGETPlayers(t *testing.T) {
 		server.ServeHTTP(response, request)
 
 		assertStatus(t, response.Code, http.StatusOK)
-		assertResponseBody(t, response.Body.String(), "10")
+		assertResponseBody(t, response.Body.String(), "The player Floyd has 10 wins")
 	})
 
 	t.Run("returns 0 on missing players", func(t *testing.T) {
@@ -48,7 +48,7 @@ func TestGETPlayers(t *testing.T) {
 		server.ServeHTTP(response, request)
 
 		assertStatus(t, response.Code, http.StatusOK)
-		assertResponseBody(t, response.Body.String(), "0")
+		assertResponseBody(t, response.Body.String(), "The player Apollo has 0 wins")
 	})
 }
 
@@ -143,7 +143,13 @@ func newGetScoreRequest(name string) *http.Request {
 
 func newPostWinRequest(name string) *http.Request {
 	body := fmt.Sprintf(`{"name": "%s"}`, name)
-	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/players/"), strings.NewReader(body))
+	req, _ := http.NewRequest(http.MethodPatch, fmt.Sprintf("/update/"), strings.NewReader(body))
+	return req
+}
+
+func newPlayerCreateRequest(name string, wins int) *http.Request {
+	body := fmt.Sprintf(`{"name": "%s", "wins: "%v""}`, name, wins)
+	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/create/%s", name), strings.NewReader(body))
 	return req
 }
 

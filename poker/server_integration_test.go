@@ -25,7 +25,7 @@ func TestRecordingWinsAndRetrievingThem(t *testing.T) {
 		server.ServeHTTP(response, newGetScoreRequest(player))
 		assertStatus(t, response.Code, http.StatusOK)
 
-		assertResponseBody(t, response.Body.String(), "3")
+		assertResponseBody(t, response.Body.String(), "The player Pepper has 3 wins")
 	})
 
 	t.Run("get League", func(t *testing.T) {
