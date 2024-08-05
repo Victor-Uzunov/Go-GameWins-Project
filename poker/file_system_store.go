@@ -114,3 +114,23 @@ func (f *FileSystemPlayerStore) AddPlayer(player *Player) error {
 	}
 	return nil
 }
+
+func (f *FileSystemPlayerStore) DeletePlayer(name string) error {
+	if name == "" {
+		return errors.New("no player name provided")
+	}
+	for i, player := range f.league {
+		if player.Name == name {
+			f.league = removeElement(f.league, i)
+			if err := f.database.Encode(f.league); err != nil {
+				return errors.New("failed to remove player from database" + err.Error())
+			}
+			return nil
+		}
+	}
+	return errors.New("player not found")
+}
+
+func removeElement(slice []Player, index int) []Player {
+	return append(slice[:index], slice[index+1:]...)
+}

@@ -13,6 +13,7 @@ type PlayerStore interface {
 	RecordWin(name string) error
 	GetLeague() League
 	AddPlayer(player *Player) error
+	DeletePlayer(name string) error
 }
 
 type Winner struct {
@@ -47,10 +48,29 @@ func NewPlayerServer(store PlayerStore) *PlayerServer {
 	router.Handle("/update/", http.HandlerFunc(p.updateHandler))
 	router.Handle("/create/", http.HandlerFunc(p.createHandler))
 	router.Handle("/info/", http.HandlerFunc(p.infoHandler))
+	router.Handle("/delete/", http.HandlerFunc(p.deleteHandler))
 
 	p.Handler = router
 
 	return p
+}
+
+// DELETE
+func (p *PlayerServer) deleteHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}
+	parts := strings.Split(r.URL.Path, "/")
+	if len(parts) != 3 {
+		http.Error(w, "Invalid path", http.StatusBadRequest)
+		return
+	}
+	username := parts[2]
+	if err := p.store.DeletePlayer(username); err != nil {
+		http.Error(w, "Invalid username provided", http.StatusNotFound)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // POST

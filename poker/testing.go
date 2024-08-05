@@ -17,6 +17,11 @@ func (s *StubPlayerStore) Find(name string) bool {
 	return ok
 }
 
+func (s *StubPlayerStore) DeletePlayer(name string) error {
+	delete(s.Scores, name)
+	return nil
+}
+
 func (s *StubPlayerStore) GetPlayerScore(name string) int {
 	score := s.Scores[name]
 	return score

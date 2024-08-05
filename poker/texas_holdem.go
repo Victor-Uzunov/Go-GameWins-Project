@@ -1,6 +1,9 @@
 package poker
 
-import "time"
+import (
+	"errors"
+	"time"
+)
 
 type TexasHoldem struct {
 	alerter BlindAlerter
@@ -15,7 +18,7 @@ func NewTexasHoldem(alerter BlindAlerter, store PlayerStore) *TexasHoldem {
 }
 
 func (p *TexasHoldem) Start(numberOfPlayers int) {
-	blindIncrement := time.Duration(5+numberOfPlayers) * time.Minute
+	blindIncrement := time.Duration(5+numberOfPlayers) * time.Second
 
 	blinds := []int{100, 200, 300, 400, 500, 600, 800, 1000, 2000, 4000, 8000}
 	blindTime := 0 * time.Second
@@ -25,6 +28,9 @@ func (p *TexasHoldem) Start(numberOfPlayers int) {
 	}
 }
 
-func (p *TexasHoldem) Finish(winner string) {
-	p.store.RecordWin(winner)
+func (p *TexasHoldem) Finish(winner string) error {
+	if err := p.store.RecordWin(winner); err != nil {
+		return errors.New("invalid player name provided")
+	}
+	return nil
 }
