@@ -25,9 +25,10 @@ func (g *GameSpy) Start(numberOfPlayers int) {
 	g.StartCalledWith = numberOfPlayers
 }
 
-func (g *GameSpy) Finish(winner string) {
+func (g *GameSpy) Finish(winner string) error {
 	g.FinishedCalled = true
 	g.FinishCalledWith = winner
+	return nil
 }
 
 func userSends(messages ...string) io.Reader {
