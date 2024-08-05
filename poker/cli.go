@@ -30,14 +30,18 @@ const BadPlayerInputErrMsg = "Bad value received for number of players, please t
 
 const BadWinnerInputMsg = "invalid winner input, expect format of 'PlayerName wins'"
 
-func (cli *CLI) PlayPoker() {
-	fmt.Fprint(cli.out, PlayerPrompt)
+func (cli *CLI) PlayPoker() error {
+	if _, err := fmt.Fprint(cli.out, PlayerPrompt); err != nil {
+		return err
+	}
 
 	numberOfPlayers, err := strconv.Atoi(cli.readLine())
 
 	if err != nil {
-		fmt.Fprint(cli.out, BadPlayerInputErrMsg)
-		return
+		if _, err1 := fmt.Fprint(cli.out, BadPlayerInputErrMsg); err1 != nil {
+			return err1
+		}
+		return nil
 	}
 
 	cli.game.Start(numberOfPlayers)
@@ -46,11 +50,16 @@ func (cli *CLI) PlayPoker() {
 	winner, err := extractWinner(winnerInput)
 
 	if err != nil {
-		fmt.Fprint(cli.out, BadWinnerInputMsg)
-		return
+		if _, err1 := fmt.Fprint(cli.out, BadWinnerInputMsg); err1 != nil {
+			return err1
+		}
+		return nil
 	}
 
-	cli.game.Finish(winner)
+	if err := cli.game.Finish(winner); err != nil {
+		return err
+	}
+	return nil
 }
 
 func extractWinner(userInput string) (string, error) {
