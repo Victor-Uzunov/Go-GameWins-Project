@@ -4,6 +4,9 @@ go 1.22.5
 
 require (
 	github.com/99designs/gqlgen v0.17.49
+	github.com/jmoiron/sqlx v1.4.0
+	github.com/joho/godotenv v1.5.1
+	github.com/lib/pq v1.10.9
 	github.com/vektah/gqlparser/v2 v2.5.16
 )
 
