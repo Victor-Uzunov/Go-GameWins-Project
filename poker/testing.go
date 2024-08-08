@@ -7,33 +7,33 @@ import (
 )
 
 type StubPlayerStore struct {
-	Scores   map[string]int
-	WinCalls []string
+	Scores   map[int]int
+	WinCalls []int
 	League   []Player
 }
 
-func (s *StubPlayerStore) Find(name string) bool {
-	_, ok := s.Scores[name]
+func (s *StubPlayerStore) Find(id int) bool {
+	_, ok := s.Scores[id]
 	return ok
 }
 
-func (s *StubPlayerStore) DeletePlayer(name string) error {
-	delete(s.Scores, name)
+func (s *StubPlayerStore) DeletePlayer(id int) error {
+	delete(s.Scores, id)
 	return nil
 }
 
-func (s *StubPlayerStore) GetPlayerScore(name string) int {
-	score := s.Scores[name]
+func (s *StubPlayerStore) GetPlayerScore(id int) int {
+	score := s.Scores[id]
 	return score
 }
 
-func (s *StubPlayerStore) RecordWin(name string) error {
-	s.WinCalls = append(s.WinCalls, name)
+func (s *StubPlayerStore) RecordWin(id int) error {
+	s.WinCalls = append(s.WinCalls, id)
 	return nil
 }
 
 func (s *StubPlayerStore) AddPlayer(player *Player) error {
-	s.Scores[player.Name] = player.Wins
+	s.Scores[player.ID] = player.Wins
 	return nil
 }
 
@@ -41,15 +41,15 @@ func (s *StubPlayerStore) GetLeague() League {
 	return s.League
 }
 
-func AssertPlayerWin(t testing.TB, store *StubPlayerStore, winner string) {
+func AssertPlayerWin(t testing.TB, store *StubPlayerStore, winnerID int) {
 	t.Helper()
 
 	if len(store.WinCalls) != 1 {
 		t.Fatalf("got %d calls to RecordWin want %d", len(store.WinCalls), 1)
 	}
 
-	if store.WinCalls[0] != winner {
-		t.Errorf("did not store correct winner got %q want %q", store.WinCalls[0], winner)
+	if store.WinCalls[0] != winnerID {
+		t.Errorf("did not store correct winner got %q want %q", store.WinCalls[0], winnerID)
 	}
 }
 

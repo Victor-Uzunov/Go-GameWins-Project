@@ -4,19 +4,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
 
 type PlayerStore interface {
-	GetPlayerScore(name string) int
-	RecordWin(name string) error
+	GetPlayerScore(id int) int
+	RecordWin(id int) error
 	GetLeague() League
 	AddPlayer(player *Player) error
-	DeletePlayer(name string) error
+	DeletePlayer(id int) error
 }
 
 type Winner struct {
+	ID   int    `json:"id"`
 	Name string `json:"name"`
 }
 
@@ -27,6 +29,7 @@ type Resource struct {
 }
 
 type Player struct {
+	ID   int    `json:"id"`
 	Name string `json:"name"`
 	Wins int    `json:"wins"`
 }
@@ -65,9 +68,12 @@ func (p *PlayerServer) deleteHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid path", http.StatusBadRequest)
 		return
 	}
-	username := parts[2]
-	if err := p.store.DeletePlayer(username); err != nil {
-		http.Error(w, "Invalid username provided", http.StatusNotFound)
+	id, err := strconv.Atoi(parts[2])
+	if err != nil {
+		http.Error(w, "must provide a valid id (int)", http.StatusBadRequest)
+	}
+	if err := p.store.DeletePlayer(id); err != nil {
+		http.Error(w, "Invalid username id provided", http.StatusNotFound)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -82,6 +88,7 @@ func (p *PlayerServer) createHandler(w http.ResponseWriter, r *http.Request) {
 	var player Player
 	if err := json.NewDecoder(r.Body).Decode(&player); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 	if err := p.store.AddPlayer(&player); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -123,8 +130,9 @@ func (p *PlayerServer) updateHandler(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&winner); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
-	p.processWin(w, winner.Name)
+	p.processWin(w, winner.ID)
 }
 
 // GET
@@ -133,18 +141,21 @@ func (p *PlayerServer) infoHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	playerName := strings.TrimPrefix(r.URL.Path, "/info/")
-	if _, err := fmt.Fprintf(w, "The player %s has %d wins", playerName, p.store.GetPlayerScore(playerName)); err != nil {
+	playerID, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/info/"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+	if _, err := fmt.Fprintf(w, "The player with id: %d has %d wins", playerID, p.store.GetPlayerScore(playerID)); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
-func (p *PlayerServer) processWin(w http.ResponseWriter, player string) {
-	if err := p.store.RecordWin(player); err != nil {
+func (p *PlayerServer) processWin(w http.ResponseWriter, playerID int) {
+	if err := p.store.RecordWin(playerID); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	w.WriteHeader(http.StatusOK)
-	if _, err := fmt.Fprintf(w, "The player with name %s has %d wins now", player, p.store.GetPlayerScore(player)); err != nil {
+	if _, err := fmt.Fprintf(w, "The player with id: %d has %d wins now", playerID, p.store.GetPlayerScore(playerID)); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }

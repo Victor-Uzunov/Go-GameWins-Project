@@ -12,9 +12,9 @@ import (
 
 func TestGETPlayers(t *testing.T) {
 	store := StubPlayerStore{
-		map[string]int{
-			"Pepper": 20,
-			"Floyd":  10,
+		map[int]int{
+			1: 20,
+			2: 10,
 		},
 		nil,
 		nil,
@@ -22,46 +22,48 @@ func TestGETPlayers(t *testing.T) {
 	server := NewPlayerServer(&store)
 
 	t.Run("returns Pepper's score", func(t *testing.T) {
-		request := newGetScoreRequest("Pepper")
+		request := newGetScoreRequest(1)
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
 
 		assertStatus(t, response.Code, http.StatusOK)
-		assertResponseBody(t, response.Body.String(), "The player Pepper has 20 wins")
+		assertResponseBody(t, response.Body.String(), "The player with id: 1 has 20 wins")
 	})
 
 	t.Run("returns Floyd's score", func(t *testing.T) {
-		request := newGetScoreRequest("Floyd")
+		request := newGetScoreRequest(2)
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
 
 		assertStatus(t, response.Code, http.StatusOK)
-		assertResponseBody(t, response.Body.String(), "The player Floyd has 10 wins")
+		assertResponseBody(t, response.Body.String(), "The player with id: 2 has 10 wins")
 	})
 
 	t.Run("returns 0 on missing players", func(t *testing.T) {
-		request := newGetScoreRequest("Apollo")
+		request := newGetScoreRequest(3)
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
 
 		assertStatus(t, response.Code, http.StatusOK)
-		assertResponseBody(t, response.Body.String(), "The player Apollo has 0 wins")
+		assertResponseBody(t, response.Body.String(), "The player with id: 3 has 0 wins")
 	})
 }
 
 func TestStoreWins(t *testing.T) {
 	store := StubPlayerStore{
-		map[string]int{},
-		nil,
-		nil,
+		make(map[int]int),
+		make([]int, 0),
+		make([]Player, 0),
 	}
 	server := NewPlayerServer(&store)
 
 	t.Run("it records wins on POST", func(t *testing.T) {
-		player := "Pepper"
+		player := 1
+
+		server.ServeHTTP(httptest.NewRecorder(), newPlayerCreateRequest(player, "Test", 3))
 
 		request := newPostWinRequest(player)
 		response := httptest.NewRecorder()
@@ -77,9 +79,9 @@ func TestLeague(t *testing.T) {
 
 	t.Run("it returns the League table as JSON", func(t *testing.T) {
 		wantedLeague := []Player{
-			{"Cleo", 32},
-			{"Chris", 20},
-			{"Tiest", 14},
+			{1, "Cleo", 32},
+			{2, "Chris", 20},
+			{3, "Tiest", 14},
 		}
 
 		store := StubPlayerStore{nil, nil, wantedLeague}
@@ -136,20 +138,20 @@ func newLeagueRequest() *http.Request {
 	return req
 }
 
-func newGetScoreRequest(name string) *http.Request {
-	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/info/%s", name), nil)
+func newGetScoreRequest(id int) *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/info/%d", id), nil)
 	return req
 }
 
-func newPostWinRequest(name string) *http.Request {
-	body := fmt.Sprintf(`{"name": "%s"}`, name)
+func newPostWinRequest(id int) *http.Request {
+	body := fmt.Sprintf(`{"id": %v, "name": "Test"}`, id)
 	req, _ := http.NewRequest(http.MethodPatch, fmt.Sprintf("/update/"), strings.NewReader(body))
 	return req
 }
 
-func newPlayerCreateRequest(name string, wins int) *http.Request {
-	body := fmt.Sprintf(`{"name": "%s", "wins: "%v""}`, name, wins)
-	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/create/%s", name), strings.NewReader(body))
+func newPlayerCreateRequest(id int, name string, wins int) *http.Request {
+	body := fmt.Sprintf(`{"id": %v, "name": "%s", "wins": %v}`, id, name, wins)
+	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/create/"), strings.NewReader(body))
 	return req
 }
 

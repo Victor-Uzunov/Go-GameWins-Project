@@ -52,7 +52,7 @@ func TestGame_Start(t *testing.T) {
 func TestGame_Finish(t *testing.T) {
 	store := &poker.StubPlayerStore{}
 	game := poker.NewTexasHoldem(dummyBlindAlerter, store)
-	winner := "Ruth"
+	winner := 1
 
 	game.Finish(winner)
 	poker.AssertPlayerWin(t, store, winner)

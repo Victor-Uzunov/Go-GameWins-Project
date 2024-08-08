@@ -28,8 +28,8 @@ func (p *TexasHoldem) Start(numberOfPlayers int) {
 	}
 }
 
-func (p *TexasHoldem) Finish(winner string) error {
-	if err := p.store.RecordWin(winner); err != nil {
+func (p *TexasHoldem) Finish(id int) error {
+	if err := p.store.RecordWin(id); err != nil {
 		return errors.New("invalid player name provided")
 	}
 	return nil

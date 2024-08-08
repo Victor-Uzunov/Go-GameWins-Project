@@ -8,9 +8,9 @@ import (
 
 type League []Player
 
-func (l League) Find(name string) *Player {
+func (l League) Find(id int) *Player {
 	for i, p := range l {
-		if p.Name == name {
+		if p.ID == id {
 			return &l[i]
 		}
 	}

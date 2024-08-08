@@ -78,9 +78,9 @@ func (f *FileSystemPlayerStore) GetLeague() League {
 	return f.league
 }
 
-func (f *FileSystemPlayerStore) GetPlayerScore(name string) int {
+func (f *FileSystemPlayerStore) GetPlayerScore(id int) int {
 
-	player := f.league.Find(name)
+	player := f.league.Find(id)
 
 	if player != nil {
 		return player.Wins
@@ -89,16 +89,14 @@ func (f *FileSystemPlayerStore) GetPlayerScore(name string) int {
 	return 0
 }
 
-func (f *FileSystemPlayerStore) RecordWin(name string) error {
-	if name == "" {
-		return errors.New("no player name provided")
-	}
-	player := f.league.Find(name)
+func (f *FileSystemPlayerStore) RecordWin(id int) error {
+
+	player := f.league.Find(id)
 
 	if player != nil {
 		player.Wins++
 	} else {
-		f.league = append(f.league, Player{name, 1})
+		return errors.New("player with this id not found")
 	}
 
 	return f.database.Encode(f.league)
@@ -115,12 +113,9 @@ func (f *FileSystemPlayerStore) AddPlayer(player *Player) error {
 	return nil
 }
 
-func (f *FileSystemPlayerStore) DeletePlayer(name string) error {
-	if name == "" {
-		return errors.New("no player name provided")
-	}
+func (f *FileSystemPlayerStore) DeletePlayer(id int) error {
 	for i, player := range f.league {
-		if player.Name == name {
+		if player.ID == id {
 			f.league = removeElement(f.league, i)
 			if err := f.database.Encode(f.league); err != nil {
 				return errors.New("failed to remove player from database" + err.Error())
