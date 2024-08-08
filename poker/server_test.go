@@ -81,7 +81,7 @@ func TestLeague(t *testing.T) {
 		wantedLeague := []Player{
 			{1, "Cleo", 32},
 			{2, "Chris", 20},
-			{3, "Tiest", 14},
+			{3, "Test", 14},
 		}
 
 		store := StubPlayerStore{nil, nil, wantedLeague}
