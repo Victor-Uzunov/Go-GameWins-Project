@@ -6,6 +6,7 @@ type Mutation struct {
 }
 
 type Player struct {
+	ID   string `json:"id"`
 	Name string `json:"name"`
 	Wins int    `json:"wins"`
 }

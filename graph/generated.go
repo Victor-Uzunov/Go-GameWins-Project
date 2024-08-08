@@ -48,28 +48,29 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Mutation struct {
-		AddPlayer func(childComplexity int, name string, wins int) int
-		RecordWin func(childComplexity int, name string) int
+		AddPlayer func(childComplexity int, id string, name string, wins int) int
+		RecordWin func(childComplexity int, id string) int
 	}
 
 	Player struct {
+		ID   func(childComplexity int) int
 		Name func(childComplexity int) int
 		Wins func(childComplexity int) int
 	}
 
 	Query struct {
 		League func(childComplexity int) int
-		Player func(childComplexity int, name string) int
+		Player func(childComplexity int, id string) int
 	}
 }
 
 type MutationResolver interface {
-	AddPlayer(ctx context.Context, name string, wins int) (*model.Player, error)
-	RecordWin(ctx context.Context, name string) (*model.Player, error)
+	AddPlayer(ctx context.Context, id string, name string, wins int) (*model.Player, error)
+	RecordWin(ctx context.Context, id string) (*model.Player, error)
 }
 type QueryResolver interface {
 	League(ctx context.Context) ([]*model.Player, error)
-	Player(ctx context.Context, name string) (*model.Player, error)
+	Player(ctx context.Context, id string) (*model.Player, error)
 }
 
 type executableSchema struct {
@@ -101,7 +102,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.AddPlayer(childComplexity, args["name"].(string), args["wins"].(int)), true
+		return e.complexity.Mutation.AddPlayer(childComplexity, args["id"].(string), args["name"].(string), args["wins"].(int)), true
 
 	case "Mutation.recordWin":
 		if e.complexity.Mutation.RecordWin == nil {
@@ -113,7 +114,14 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.RecordWin(childComplexity, args["name"].(string)), true
+		return e.complexity.Mutation.RecordWin(childComplexity, args["id"].(string)), true
+
+	case "Player.id":
+		if e.complexity.Player.ID == nil {
+			break
+		}
+
+		return e.complexity.Player.ID(childComplexity), true
 
 	case "Player.name":
 		if e.complexity.Player.Name == nil {
@@ -146,7 +154,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Player(childComplexity, args["name"].(string)), true
+		return e.complexity.Query.Player(childComplexity, args["id"].(string)), true
 
 	}
 	return 0, false
@@ -275,23 +283,32 @@ func (ec *executionContext) field_Mutation_addPlayer_args(ctx context.Context, r
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	var arg1 string
 	if tmp, ok := rawArgs["name"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["name"] = arg0
-	var arg1 int
+	args["name"] = arg1
+	var arg2 int
 	if tmp, ok := rawArgs["wins"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("wins"))
-		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
+		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["wins"] = arg1
+	args["wins"] = arg2
 	return args, nil
 }
 
@@ -299,14 +316,14 @@ func (ec *executionContext) field_Mutation_recordWin_args(ctx context.Context, r
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["name"] = arg0
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -329,14 +346,14 @@ func (ec *executionContext) field_Query_player_args(ctx context.Context, rawArgs
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["name"] = arg0
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -392,7 +409,7 @@ func (ec *executionContext) _Mutation_addPlayer(ctx context.Context, field graph
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().AddPlayer(rctx, fc.Args["name"].(string), fc.Args["wins"].(int))
+		return ec.resolvers.Mutation().AddPlayer(rctx, fc.Args["id"].(string), fc.Args["name"].(string), fc.Args["wins"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -414,6 +431,8 @@ func (ec *executionContext) fieldContext_Mutation_addPlayer(ctx context.Context,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "id":
+				return ec.fieldContext_Player_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Player_name(ctx, field)
 			case "wins":
@@ -450,7 +469,7 @@ func (ec *executionContext) _Mutation_recordWin(ctx context.Context, field graph
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().RecordWin(rctx, fc.Args["name"].(string))
+		return ec.resolvers.Mutation().RecordWin(rctx, fc.Args["id"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -472,6 +491,8 @@ func (ec *executionContext) fieldContext_Mutation_recordWin(ctx context.Context,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "id":
+				return ec.fieldContext_Player_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Player_name(ctx, field)
 			case "wins":
@@ -490,6 +511,50 @@ func (ec *executionContext) fieldContext_Mutation_recordWin(ctx context.Context,
 	if fc.Args, err = ec.field_Mutation_recordWin_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Player_id(ctx context.Context, field graphql.CollectedField, obj *model.Player) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Player_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Player_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Player",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -621,6 +686,8 @@ func (ec *executionContext) fieldContext_Query_league(_ context.Context, field g
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "id":
+				return ec.fieldContext_Player_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Player_name(ctx, field)
 			case "wins":
@@ -646,7 +713,7 @@ func (ec *executionContext) _Query_player(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Player(rctx, fc.Args["name"].(string))
+		return ec.resolvers.Query().Player(rctx, fc.Args["id"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -668,6 +735,8 @@ func (ec *executionContext) fieldContext_Query_player(ctx context.Context, field
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "id":
+				return ec.fieldContext_Player_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Player_name(ctx, field)
 			case "wins":
@@ -2661,6 +2730,11 @@ func (ec *executionContext) _Player(ctx context.Context, sel ast.SelectionSet, o
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Player")
+		case "id":
+			out.Values[i] = ec._Player_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "name":
 			out.Values[i] = ec._Player_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -3118,6 +3192,21 @@ func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interf
 
 func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.SelectionSet, v bool) graphql.Marshaler {
 	res := graphql.MarshalBoolean(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
+	res, err := graphql.UnmarshalID(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalID(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")

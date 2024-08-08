@@ -9,10 +9,11 @@ import (
 	"application/poker"
 	"context"
 	"fmt"
+	"strconv"
 )
 
 // AddPlayer is the resolver for the addPlayer field.
-func (r *mutationResolver) AddPlayer(ctx context.Context, name string, wins int) (*model.Player, error) {
+func (r *mutationResolver) AddPlayer(ctx context.Context, id string, name string, wins int) (*model.Player, error) {
 	player := &poker.Player{
 		Name: name,
 		Wins: wins,
@@ -26,10 +27,14 @@ func (r *mutationResolver) AddPlayer(ctx context.Context, name string, wins int)
 }
 
 // RecordWin is the resolver for the recordWin field.
-func (r *mutationResolver) RecordWin(ctx context.Context, name string) (*model.Player, error) {
-	r.Store.RecordWin(name)
+func (r *mutationResolver) RecordWin(ctx context.Context, id string) (*model.Player, error) {
+	num, err := strconv.Atoi(id)
+	if err != nil {
+		return nil, err
+	}
+	r.Store.RecordWin(num)
 	player := &model.Player{
-		Name: name,
+		ID: id,
 	}
 	return player, nil
 }
@@ -45,8 +50,12 @@ func (r *queryResolver) League(ctx context.Context) ([]*model.Player, error) {
 }
 
 // Player is the resolver for the player field.
-func (r *queryResolver) Player(ctx context.Context, name string) (*model.Player, error) {
-	player := r.Store.GetLeague().Find(name)
+func (r *queryResolver) Player(ctx context.Context, id string) (*model.Player, error) {
+	num, err := strconv.Atoi(id)
+	if err != nil {
+		return nil, err
+	}
+	player := r.Store.GetLeague().Find(num)
 	if player == nil {
 		return nil, fmt.Errorf("player not found")
 	}

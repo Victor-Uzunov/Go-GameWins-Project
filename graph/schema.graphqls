@@ -1,14 +1,15 @@
 type Player {
+  id: ID!
   name: String!
   wins: Int!
 }
 
 type Query {
   league: [Player!]!
-  player(name: String!): Player
+  player(id: ID!): Player
 }
 
 type Mutation {
-  addPlayer(name: String!, wins: Int!): Player
-  recordWin(name: String!): Player
+  addPlayer(id: ID!, name: String!, wins: Int!): Player
+  recordWin(id: ID!): Player
 }
