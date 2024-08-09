@@ -11,9 +11,13 @@ func TestTape_Write(t *testing.T) {
 
 	tape := &tape{file}
 
-	tape.Write([]byte("abc"))
+	if _, err := tape.Write([]byte("abc")); err != nil {
+		t.Fatal(err)
+	}
 
-	file.Seek(0, io.SeekStart)
+	if _, err := file.Seek(0, io.SeekStart); err != nil {
+		t.Fatal(err)
+	}
 	newFileContents, _ := io.ReadAll(file)
 
 	got := string(newFileContents)
