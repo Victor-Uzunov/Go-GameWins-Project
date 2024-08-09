@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func TestGETPlayers(t *testing.T) {
+func TestGetPlayers(t *testing.T) {
 	store := StubPlayerStore{
 		map[int]int{
 			1: 20,
@@ -20,85 +20,89 @@ func TestGETPlayers(t *testing.T) {
 		nil,
 	}
 	server := NewPlayerServer(&store)
-
-	t.Run("returns Pepper's score", func(t *testing.T) {
-		request := newGetScoreRequest(1)
-		response := httptest.NewRecorder()
-
-		server.ServeHTTP(response, request)
-
-		assertStatus(t, response.Code, http.StatusOK)
-		assertResponseBody(t, response.Body.String(), "The player with id: 1 has 20 wins")
-	})
-
-	t.Run("returns Floyd's score", func(t *testing.T) {
-		request := newGetScoreRequest(2)
-		response := httptest.NewRecorder()
-
-		server.ServeHTTP(response, request)
-
-		assertStatus(t, response.Code, http.StatusOK)
-		assertResponseBody(t, response.Body.String(), "The player with id: 2 has 10 wins")
-	})
-
-	t.Run("returns 0 on missing players", func(t *testing.T) {
-		request := newGetScoreRequest(3)
-		response := httptest.NewRecorder()
-
-		server.ServeHTTP(response, request)
-
-		assertStatus(t, response.Code, http.StatusOK)
-		assertResponseBody(t, response.Body.String(), "The player with id: 3 has 0 wins")
-	})
+	tests := []struct {
+		name           string
+		playerID       int
+		expectedStatus int
+		expectedBody   string
+	}{
+		{"returns player with ID:1 score", 1, http.StatusOK, "The player with id: 1 has 20 wins"},
+		{"returns player with ID:2 score", 2, http.StatusOK, "The player with id: 2 has 10 wins"},
+		{"returns 0 on missing players", 3, http.StatusOK, "The player with id: 3 has 0 wins"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			request := newGetScoreRequest(tt.playerID)
+			response := httptest.NewRecorder()
+			server.ServeHTTP(response, request)
+			assertStatus(t, response.Code, tt.expectedStatus)
+			assertResponseBody(t, response.Body.String(), tt.expectedBody)
+		})
+	}
 }
 
-func TestStoreWins(t *testing.T) {
+func TestScoreWins(t *testing.T) {
 	store := StubPlayerStore{
 		make(map[int]int),
 		make([]int, 0),
 		make([]Player, 0),
 	}
 	server := NewPlayerServer(&store)
+	tests := []struct {
+		name           string
+		playerID       int
+		playerName     string
+		wins           int
+		expectedStatus int
+	}{
+		{"records wins on POST", 1, "Test", 3, http.StatusOK},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 
-	t.Run("it records wins on POST", func(t *testing.T) {
-		player := 1
+			request := newPlayerCreateRequest(tt.playerID, tt.playerName, tt.wins)
+			server.ServeHTTP(httptest.NewRecorder(), request)
 
-		server.ServeHTTP(httptest.NewRecorder(), newPlayerCreateRequest(player, "Test", 3))
+			request = newPostWinRequest(tt.playerID)
+			response := httptest.NewRecorder()
+			server.ServeHTTP(response, request)
 
-		request := newPostWinRequest(player)
-		response := httptest.NewRecorder()
-
-		server.ServeHTTP(response, request)
-
-		assertStatus(t, response.Code, http.StatusOK)
-		AssertPlayerWin(t, &store, player)
-	})
+			assertStatus(t, response.Code, tt.expectedStatus)
+			AssertPlayerWin(t, &store, tt.playerID)
+		})
+	}
 }
 
 func TestLeague(t *testing.T) {
+	tests := []struct {
+		name           string
+		league         []Player
+		expectedStatus int
+		expectedLeague []Player
+	}{
+		{"returns the league table as JSON", []Player{
+			{1, "Test1", 32},
+			{2, "Test2", 20},
+			{3, "Test3", 14},
+		}, http.StatusOK, []Player{
+			{1, "Test1", 32},
+			{2, "Test2", 20},
+			{3, "Test3", 14}}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := StubPlayerStore{nil, nil, tt.league}
+			server := NewPlayerServer(&store)
+			request := newLeagueRequest()
+			response := httptest.NewRecorder()
+			server.ServeHTTP(response, request)
+			got := getLeagueFromResponse(t, response.Body)
 
-	t.Run("it returns the League table as JSON", func(t *testing.T) {
-		wantedLeague := []Player{
-			{1, "Cleo", 32},
-			{2, "Chris", 20},
-			{3, "Test", 14},
-		}
-
-		store := StubPlayerStore{nil, nil, wantedLeague}
-		server := NewPlayerServer(&store)
-
-		request := newLeagueRequest()
-		response := httptest.NewRecorder()
-
-		server.ServeHTTP(response, request)
-
-		got := getLeagueFromResponse(t, response.Body)
-
-		assertStatus(t, response.Code, http.StatusOK)
-		assertLeague(t, got, wantedLeague)
-		assertContentType(t, response, jsonContentType)
-
-	})
+			assertStatus(t, response.Code, tt.expectedStatus)
+			assertLeague(t, got, tt.expectedLeague)
+			assertContentType(t, response, jsonContentType)
+		})
+	}
 }
 
 func assertContentType(t testing.TB, response *httptest.ResponseRecorder, want string) {
