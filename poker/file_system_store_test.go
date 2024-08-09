@@ -8,20 +8,26 @@ import (
 func createTempFile(t testing.TB, initialData string) (*os.File, func()) {
 	t.Helper()
 
-	tmpfile, err := os.CreateTemp("", "db")
+	tmpFile, err := os.CreateTemp("", "db")
 
 	if err != nil {
 		t.Fatalf("could not create temp file %v", err)
 	}
 
-	tmpfile.Write([]byte(initialData))
-
-	removeFile := func() {
-		tmpfile.Close()
-		os.Remove(tmpfile.Name())
+	if _, err = tmpFile.Write([]byte(initialData)); err != nil {
+		t.Fatalf("could not write to temp file %v", err)
 	}
 
-	return tmpfile, removeFile
+	removeFile := func() {
+		if err = tmpFile.Close(); err != nil {
+			t.Fatalf("could not close temp file %v", err)
+		}
+		if err = os.Remove(tmpFile.Name()); err != nil {
+			t.Fatalf("could not remove temp file %v", err)
+		}
+	}
+
+	return tmpFile, removeFile
 }
 
 func TestFileSystemStore(t *testing.T) {

@@ -3,6 +3,7 @@ package poker_test
 import (
 	"application/poker"
 	"fmt"
+	"log"
 	"testing"
 	"time"
 )
@@ -54,7 +55,9 @@ func TestGame_Finish(t *testing.T) {
 	game := poker.NewTexasHoldem(dummyBlindAlerter, store)
 	winner := 1
 
-	game.Finish(winner)
+	if err := game.Finish(winner); err != nil {
+		log.Fatal(err)
+	}
 	poker.AssertPlayerWin(t, store, winner)
 }
 
