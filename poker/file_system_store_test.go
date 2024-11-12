@@ -80,7 +80,9 @@ func TestFileSystemStore(t *testing.T) {
 
 		assertNoError(t, err)
 
-		store.RecordWin(2)
+		if err = store.RecordWin(2); err != nil {
+			t.Fatalf("could not store wins for existing players: %v", err)
+		}
 
 		got := store.GetPlayerScore(2)
 		want := 34

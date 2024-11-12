@@ -1,3 +1,9 @@
+directive @role(requires: Role!) on FIELD_DEFINITION
+
+enum Role {
+READER
+  WRITER
+}
 type Player {
   id: ID!
   name: String!
@@ -5,8 +11,8 @@ type Player {
 }
 
 type Query {
-  league: [Player!]!
-  player(id: ID!): Player
+  league: [Player!]! @role(requires: READER)
+  player(id: ID!): Player @role(requires: WRITER)
 }
 
 type Mutation {
